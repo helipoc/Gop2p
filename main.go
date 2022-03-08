@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -33,7 +34,7 @@ func main() {
 }
 
 func handlSend() {
-	var clt string
+	var clt, f string
 	var c net.Conn
 	var e error
 	con := false
@@ -46,7 +47,20 @@ func handlSend() {
 			con = true
 		}
 	}
-	fmt.Println("[+] Connected ")
+
+	fmt.Println("[+] Client Connected ")
+	fmt.Print("[+] File to send : ")
+	fmt.Scan(&f)
+	if len(f) > 16 {
+		fmt.Println("[-] File name too large ")
+		os.Exit(0)
+	}
+	w := bufio.NewWriter(c)
+	//TODO Add filename to TCP Header
+	r, _ := w.Write([]byte(f))
+	w.Write([]byte("Reaaal dataaaa bla bla bla"))
+	w.Flush()
+	fmt.Print("Wrote : ", r, " bytes !")
 	c.Close()
 }
 
@@ -60,7 +74,10 @@ func handlRec() {
 
 	for {
 		c, _ := s.Accept()
-		fmt.Print(c.RemoteAddr())
+		rd := bufio.NewReader(c)
 
+		fileNm, _ := rd.Peek(16)
+
+		fmt.Print(string(fileNm) + "\n")
 	}
 }
