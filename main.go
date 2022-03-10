@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 )
@@ -56,8 +57,13 @@ func handlSend() {
 		os.Exit(0)
 	}
 	w := bufio.NewWriter(c)
-	//TODO Add filename to TCP Header
 	r, _ := w.Write([]byte(f))
+	if r < 16 {
+		for i := 0; i < 16-r; i++ {
+			w.WriteByte(0)
+		}
+
+	}
 	w.Write([]byte("Reaaal dataaaa bla bla bla"))
 	w.Flush()
 	fmt.Print("Wrote : ", r, " bytes !")
@@ -74,10 +80,9 @@ func handlRec() {
 
 	for {
 		c, _ := s.Accept()
-		rd := bufio.NewReader(c)
-
-		fileNm, _ := rd.Peek(16)
-
-		fmt.Print(string(fileNm) + "\n")
+		data, _ := ioutil.ReadAll(c)
+		fileNm := data[:16]
+		fmt.Println("File name : " + string(fileNm))
+		fmt.Println("Data : " + string(data[16:]))
 	}
 }
