@@ -54,8 +54,15 @@ func handlSend() {
 	fmt.Scan(&f)
 	if len(f) > 16 {
 		fmt.Println("[-] File name too large ")
-		os.Exit(0)
+		os.Exit(1)
 	}
+	file, fileErr := os.ReadFile(f)
+
+	if fileErr != nil {
+		fmt.Print("[-] Can't Open file")
+		os.Exit(1)
+	}
+
 	w := bufio.NewWriter(c)
 	r, _ := w.Write([]byte(f))
 	if r < 16 {
@@ -64,9 +71,8 @@ func handlSend() {
 		}
 
 	}
-	w.Write([]byte("Reaaal dataaaa bla bla bla"))
+	w.Write(file)
 	w.Flush()
-	fmt.Print("Wrote : ", r, " bytes !")
 	c.Close()
 }
 
@@ -75,14 +81,32 @@ func handlRec() {
 
 	if r != nil {
 		fmt.Print(r.Error())
-		os.Exit(0)
+		os.Exit(1)
 	}
 
 	for {
 		c, _ := s.Accept()
 		data, _ := ioutil.ReadAll(c)
-		fileNm := data[:16]
-		fmt.Println("File name : " + string(fileNm))
-		fmt.Println("Data : " + string(data[16:]))
+		if len(data) < 16 {
+			continue
+		}
+
+		fileNameChunk := data[:16] // file name & save format
+		fileDataChunk := data[16:] // data
+		fileName := ""
+
+		for _, c := range fileNameChunk {
+			if c == 0 {
+				break
+			}
+			fileName += string(c)
+		}
+		errSaving := os.WriteFile(fileName, fileDataChunk, 0664)
+		if errSaving != nil {
+			fmt.Print("[-] Error while Saving file ... ")
+			fmt.Print(errSaving)
+			os.Exit(1)
+		}
+		fmt.Println("[+] Recieved " + fileName)
 	}
 }
