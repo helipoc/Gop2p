@@ -3,8 +3,10 @@ package sender
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"path"
 )
 
 func HandlSend() {
@@ -29,7 +31,7 @@ func HandlSend() {
 		fmt.Println("[-] File name too large ")
 		os.Exit(1)
 	}
-	file, fileErr := os.ReadFile(f)
+	file, fileErr := os.ReadFile(path.Join(".", f))
 
 	if fileErr != nil {
 		fmt.Print("[-] Can't Open file")
@@ -47,6 +49,13 @@ func HandlSend() {
 
 	w.Write(file)
 	w.Flush()
-	fmt.Println("file sent")
+
+	buffer := make([]byte, 2)
+	n, ss := io.ReadFull(c, buffer)
+	print(n)
+	print(ss)
+	c.Close()
+
+	//print(string(buffer))
 
 }

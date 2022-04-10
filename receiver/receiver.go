@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path"
 )
 
 func HandlRec() {
@@ -15,30 +16,47 @@ func HandlRec() {
 		os.Exit(1)
 	}
 
+	defer s.Close()
+
 	for {
-		c, _ := s.Accept()
-		data, _ := io.ReadAll(c)
-		if len(data) < 16 {
-			continue
-		}
 
-		fileNameChunk := data[:16] // file name & save format
-		fileDataChunk := data[16:] // data
-		fileName := ""
-
-		for _, c := range fileNameChunk {
-			if c == 0 {
-				break
-			}
-			fileName += string(c)
-		}
-		errSaving := os.WriteFile(fileName, fileDataChunk, 0664)
-		if errSaving != nil {
-			fmt.Print("[-] Error while Saving file ... ")
-			fmt.Print(errSaving)
-			os.Exit(1)
-		}
-		c.Write([]byte("ok"))
-		fmt.Println("[+] Recieved " + fileName)
+		con, _ := s.Accept()
+		// handling connection on a new goroutine
+		go conHandler(con)
 	}
+}
+
+func conHandler(c net.Conn) {
+
+	defer c.Close()
+
+	data, _ := io.ReadAll(c)
+	if len(data) < 16 {
+		//data size is less than file namearea
+		return
+	}
+
+	fileNameChunk := data[:16] // file name & save format
+	fileDataChunk := data[16:] // data
+	fileName := ""
+
+	for _, ch := range fileNameChunk {
+		if ch == 0 {
+			break
+		}
+		fileName += string(ch)
+	}
+	errSaving := os.WriteFile(path.Join(".", "test"), fileDataChunk, 0664)
+
+	if errSaving != nil {
+		fmt.Print("[-] Error while Saving file ... ")
+		fmt.Print(errSaving)
+		os.Exit(1)
+	}
+
+	_, rr := c.Write([]byte("ok"))
+
+	print(rr)
+	fmt.Println("[+] Received " + fileName)
+	c.Close()
 }

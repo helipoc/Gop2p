@@ -12,8 +12,6 @@ func main() {
 
 	var t string
 
-	x, _ := os.Stat("xx")
-	fmt.Println(x.Size())
 	fmt.Println("1 - Send a file")
 	fmt.Println("2 - Recieve a file")
 	fmt.Print("Choose option : ")
