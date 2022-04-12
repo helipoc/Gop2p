@@ -2,8 +2,10 @@ package sender
 
 import (
 	"bufio"
+	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -31,15 +33,22 @@ func HandlSend() {
 		fmt.Println("[-] File name too large ")
 		os.Exit(1)
 	}
+
+	fileInfo, fStateErr := os.Stat(path.Join(".", f))
+
+	if fStateErr != nil {
+		log.Fatal(fStateErr.Error())
+	}
+
 	file, fileErr := os.ReadFile(path.Join(".", f))
 
 	if fileErr != nil {
-		fmt.Print("[-] Can't Open file")
-		os.Exit(1)
+		log.Fatal(fileErr.Error())
 	}
 
 	w := bufio.NewWriter(c)
 	r, _ := w.Write([]byte(f))
+
 	if r < 16 {
 		for i := 0; i < 16-r; i++ {
 			w.WriteByte(0)
@@ -47,8 +56,13 @@ func HandlSend() {
 
 	}
 
+	sizeBlock := make([]byte, binary.MaxVarintLen64) // buffer for the file size
+
+	binary.LittleEndian.PutUint64(sizeBlock, uint64(fileInfo.Size())) // packing file size as int64
+
+	w.Write(sizeBlock)
 	w.Write(file)
-	w.Flush()
+	w.Flush() // write to conn
 
 	buffer := make([]byte, 2)
 	n, ss := io.ReadFull(c, buffer)

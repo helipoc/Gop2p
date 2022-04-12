@@ -32,15 +32,17 @@ func conHandler(c net.Conn) {
 
 	data, _ := io.ReadAll(c)
 	if len(data) < 16 {
-		//data size is less than file namearea
+		//data size is less than file name area
 		return
 	}
 
-	fileNameChunk := data[:16] // file name & save format
-	fileDataChunk := data[16:] // data
+	fileNameBlock := data[:16] // file name & save format
+	fileSizeBlock := data[16:27]
+	fmt.Print(fileSizeBlock)
+	fileDataChunk := data[27:] // data
 	fileName := ""
 
-	for _, ch := range fileNameChunk {
+	for _, ch := range fileNameBlock {
 		if ch == 0 {
 			break
 		}
