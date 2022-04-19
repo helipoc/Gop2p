@@ -56,20 +56,15 @@ func HandlSend() {
 
 	}
 
-	sizeBlock := make([]byte, binary.MaxVarintLen64) // buffer for the file size
-
+	sizeBlock := make([]byte, binary.MaxVarintLen64)                  // buffer for the file size
 	binary.LittleEndian.PutUint64(sizeBlock, uint64(fileInfo.Size())) // packing file size as int64
-
 	w.Write(sizeBlock)
 	w.Write(file)
 	w.Flush() // write to conn
 
-	buffer := make([]byte, 2)
-	n, ss := io.ReadFull(c, buffer)
-	print(n)
-	print(ss)
+	// Getting Reply from client
+	reply, _ := io.ReadAll(c)
+	fmt.Print("Client Reply : ", string(reply))
 	c.Close()
-
-	//print(string(buffer))
 
 }
