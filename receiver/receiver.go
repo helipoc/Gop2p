@@ -44,6 +44,9 @@ func conHandler(c net.Conn) {
 	//reading file name block
 	for i := 1; i <= 16; i++ {
 		b, _ := stream.ReadByte()
+		if b == 0 {
+			continue
+		}
 		fileName += string(b)
 	}
 
@@ -54,7 +57,7 @@ func conHandler(c net.Conn) {
 	}
 
 	//parsing datasize block value
-	dataSize := binary.LittleEndian.Uint16(fileSizeBlock)
+	dataSize := binary.LittleEndian.Uint64(fileSizeBlock)
 
 	outputFile, errF := os.OpenFile(path.Join(".", fileName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
@@ -68,9 +71,7 @@ func conHandler(c net.Conn) {
 	for i := 1; i <= int(dataSize); i++ {
 		b, _ := stream.ReadByte()
 
-		l, _ := outputFile.Write([]byte{b})
-
-		println(l)
+		outputFile.Write([]byte{b})
 
 	}
 
