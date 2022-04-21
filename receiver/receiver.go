@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"path"
@@ -68,15 +69,22 @@ func conHandler(c net.Conn) {
 	defer outputFile.Close()
 
 	//writing {datasize} byte from connection to file {filename}
+
+	block := math.Ceil(float64(dataSize) / 100)
+	fmt.Println("Receiving ... ", fileName)
+	fmt.Print("[")
+
 	for i := 1; i <= int(dataSize); i++ {
 		b, _ := stream.ReadByte()
 
 		outputFile.Write([]byte{b})
+		if i%int(block) == 0 {
+			fmt.Print("#")
+		}
 
 	}
-
+	fmt.Println("]")
 	c.Write([]byte("[+] File Received ! "))
-
 	fmt.Println("[+] Received " + fileName)
 	c.Close()
 }
