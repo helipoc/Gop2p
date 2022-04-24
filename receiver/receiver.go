@@ -26,11 +26,10 @@ func HandlRec() {
 	}
 }
 
-func errHandler(c net.Conn, e error) {
-	c.Write([]byte("[-] Error : " + e.Error()))
+func errHandler(c net.Conn, e error, msg string) {
+	c.Write([]byte("[-] Error : " + msg))
 	c.Close()
-	fmt.Println("[-] ", e.Error())
-	os.Exit(1)
+	fmt.Println("[-] ", msg)
 }
 
 func conHandler(c net.Conn) {
@@ -60,30 +59,38 @@ func conHandler(c net.Conn) {
 	//parsing datasize block value
 	dataSize := binary.LittleEndian.Uint64(fileSizeBlock)
 
+	// checking if file with same name&format already exists
+	if _, exists := os.Stat(fileName); exists == nil {
+		errHandler(c, exists, "File already exists .")
+		return
+	}
+
 	outputFile, errF := os.OpenFile(path.Join(".", fileName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if errF != nil {
-		errHandler(c, errF)
+		errHandler(c, errF, errF.Error())
+		return
 	}
 
 	defer outputFile.Close()
 
 	//writing {datasize} byte from connection to file {filename}
 
-	block := math.Ceil(float64(dataSize) / 100)
-	fmt.Println("Receiving ... ", fileName)
-	fmt.Print("[")
+	block := math.Floor(float64(dataSize) / 100)
+	blockNum := 1
 
 	for i := 1; i <= int(dataSize); i++ {
 		b, _ := stream.ReadByte()
 
 		outputFile.Write([]byte{b})
 		if i%int(block) == 0 {
-			fmt.Print("#")
+
+			fmt.Println("Received ", fmt.Sprintf("%-3d / 100 blocks of ", blockNum), fileName, " \xE2\x9C\x93")
+			blockNum++
+
 		}
 
 	}
-	fmt.Println("]")
 	c.Write([]byte("[+] File Received ! "))
 	fmt.Println("[+] Received " + fileName)
 	c.Close()
