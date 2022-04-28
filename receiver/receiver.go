@@ -7,22 +7,43 @@ import (
 	"math"
 	"net"
 	"os"
+	"os/signal"
 	"path"
+	"syscall"
 )
 
 func HandlRec() {
+
 	s, r := net.Listen("tcp", ":7331")
+
+	cancel := make(chan os.Signal, 1)
+
+	signal.Notify(cancel, os.Interrupt, syscall.SIGTERM)
+
+	pendingFiles := make(map[string]uint8)
 
 	if r != nil {
 		fmt.Print(r.Error())
 		os.Exit(1)
 	}
 
+	//deleting not fully transferred files on cancelation
+	go func() {
+		<-cancel
+		fmt.Println("Aborting ...")
+		fmt.Println("Deleting corrupted files ...")
+		for f := range pendingFiles {
+			os.Remove(f)
+		}
+		fmt.Println("Bye !")
+		os.Exit(0)
+	}()
+
 	for {
 
 		con, _ := s.Accept()
 		// handling connection on a new goroutine
-		go conHandler(con)
+		go conHandler(con, pendingFiles)
 	}
 }
 
@@ -32,7 +53,7 @@ func errHandler(c net.Conn, e error, msg string) {
 	fmt.Println("[-] ", msg)
 }
 
-func conHandler(c net.Conn) {
+func conHandler(c net.Conn, m map[string]uint8) {
 
 	defer c.Close()
 
@@ -65,6 +86,8 @@ func conHandler(c net.Conn) {
 		return
 	}
 
+	m[fileName] = 1 // adding filename to the queue
+
 	outputFile, errF := os.OpenFile(path.Join(".", fileName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if errF != nil {
@@ -93,5 +116,6 @@ func conHandler(c net.Conn) {
 	}
 	c.Write([]byte("[+] File Received ! "))
 	fmt.Println("[+] Received " + fileName)
+	delete(m, fileName) //removing file name from the queue
 	c.Close()
 }

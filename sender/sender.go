@@ -62,9 +62,14 @@ func HandlSend() {
 	w.Write(file)                                                     // writing data
 	w.Flush()                                                         // send to receiver
 
-	// Getting Reply from client
+	// Getting Reply back
 	reply, _ := io.ReadAll(c)
-	fmt.Print("Client Reply : ", string(reply))
+	if len(reply) == 0 {
+		fmt.Println("[-] Client Aborted !")
+	} else {
+		fmt.Print("Client Reply : ", string(reply))
+
+	}
 	c.Close()
 
 }
