@@ -34,17 +34,21 @@ func HandlSend() {
 		os.Exit(1)
 	}
 
-	fileInfo, fStateErr := os.Stat(path.Join(".", f))
+	fileInfo, fStateErr := os.Stat(f)
 
 	if fStateErr != nil {
 		log.Fatal(fStateErr.Error())
+		os.Exit(1)
 	}
 
-	file, fileErr := os.ReadFile(path.Join(".", f))
+	file, fileErr := os.ReadFile(f)
 
 	if fileErr != nil {
 		log.Fatal(fileErr.Error())
+		os.Exit(1)
 	}
+
+	_, f = path.Split(f)
 
 	w := bufio.NewWriter(c)
 	r, _ := w.Write([]byte(f))

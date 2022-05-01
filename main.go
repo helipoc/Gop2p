@@ -14,6 +14,7 @@ func main() {
 
 	fmt.Println("1 - Send a file")
 	fmt.Println("2 - Receive a file")
+
 	fmt.Print("Choose option : ")
 	fmt.Scan(&t)
 
