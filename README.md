@@ -10,7 +10,7 @@ features :
 - safe concurrent senders 
 - graceful shutdown & cleanup, using os signals
 - fault-tolerant receiver
-- reply on success/fail
+- reply on success/failure/cancelation
 - faster file r&w using bufferd i/o
 
 
